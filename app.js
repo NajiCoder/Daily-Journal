@@ -1,9 +1,9 @@
-
-
+require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-// Load the full build.
+const port = process.env.PORT;
+// Load the full build of lodash
 const _ = require('lodash');
 const ejs = require("ejs");
 
@@ -18,10 +18,11 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
-let posts = [];
+// Add connection to MongoDb Atlas
+const dbConnectionString = process.env.Atlas_Journal_Connection;
 
 // Initialize Mongoose
-mongoose.connect("mongodb://127.0.0.1:27017/JournalDB");
+mongoose.connect(dbConnectionString + "JournalDB");
 
 // Create a Schema
 const postSchema = new mongoose.Schema({
@@ -128,6 +129,6 @@ app.post("/delete", async function(req, res){
 
 
 
-app.listen(3000, function() {
+app.listen(port, function() {
   console.log("Server started on port 3000");
 });
