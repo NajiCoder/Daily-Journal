@@ -2,11 +2,12 @@
 
 const express = require("express");
 const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
 // Load the full build.
 const _ = require('lodash');
 const ejs = require("ejs");
 
-const homeStartingContent = "Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.";
+const homeStartingContent = "Welcome to our journaling website! With our user-friendly interface, you can easily create and manage your personal journal. Write down your thoughts, reflections, and experiences with ease. Plus, you have the option to delete your journals whenever you want, ensuring your privacy and security. Start journaling today!";
 const aboutContent = "Hac habitasse platea dictumst vestibulum rhoncus est pellentesque. Dictumst vestibulum rhoncus est pellentesque elit ullamcorper. Non diam phasellus vestibulum lorem sed. Platea dictumst quisque sagittis purus sit. Egestas sed sed risus pretium quam vulputate dignissim suspendisse. Mauris in aliquam sem fringilla. Semper risus in hendrerit gravida rutrum quisque non tellus orci. Amet massa vitae tortor condimentum lacinia quis vel eros. Enim ut tellus elementum sagittis vitae. Mauris ultrices eros in cursus turpis massa tincidunt dui.";
 const contactContent = "Scelerisque eleifend donec pretium vulputate sapien. Rhoncus urna neque viverra justo nec ultrices. Arcu dui vivamus arcu felis bibendum. Consectetur adipiscing elit duis tristique. Risus viverra adipiscing at in tellus integer feugiat. Sapien nec sagittis aliquam malesuada bibendum arcu vitae. Consequat interdum varius sit amet mattis. Iaculis nunc sed augue lacus. Interdum posuere lorem ipsum dolor sit amet consectetur adipiscing elit. Pulvinar elementum integer enim neque. Ultrices gravida dictum fusce ut placerat orci nulla. Mauris in aliquam sem fringilla ut morbi tincidunt. Tortor posuere ac ut consequat semper viverra nam libero.";
 
@@ -18,6 +19,32 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
 let posts = [];
+
+// Initialize Mongoose
+mongoose.connect("mongodb://127.0.0.1:27017/JournalDB");
+
+// Create a Schema
+const postSchema = new mongoose.Schema({
+  title: String,
+  content: String,
+  date: String
+})
+
+// Create a Model/Collection
+const Post = mongoose.model("post", postSchema);
+
+
+// async function insertPost(){
+//   try {
+//     const result = await Post.insertMany(posts);
+//     console.log("Inserted post1 into the database");
+//     result.save();
+//   } catch (error) {
+//     console.error(error);
+//   }
+// }
+
+// insertPost();
 
 const date = getDate();
 
@@ -40,8 +67,14 @@ function getDate(){
 
 
 
-app.get("/", function(req, res){
-  res.render("home", {homeContent: homeStartingContent, posts: posts, date: date,})
+app.get("/", async function(req, res){
+  try {
+    const postsList = await Post.find({});
+    res.render("home", {homeContent: homeStartingContent, posts: postsList,});
+  } catch(err){
+    console.log(err);
+  }
+  
 })
 
 app.get("/about", function(req, res){
@@ -56,26 +89,36 @@ app.get("/compose", function(req, res){
   res.render("compose");
 })
 
+app.get("/posts/:postId", async function(req, res){
+  // Use loadash to turn string to lowercase
+  const requestedPostId = req.params.postId;
+  
+  // Find the correspondand post when "read more" is clicked by Id
+  const storedPostId = await Post.findById(requestedPostId) ;
+  res.render("post", {postTitle : storedPostId.title, postContent: storedPostId.content, postDate: storedPostId.date});
+})
+
 app.post("/compose", function(req, res){
-  const post = {
+  const post = new Post({
     title: req.body.postTitle,
     content : req.body.postContent,
-  }
-  posts.push(post);
-  
+    date: date
+  })
+  post.save();
+  console.log(post.date);
   res.redirect("/");
 })
 
-app.get("/posts/:test", function(req, res){
-  // Use loadash to turn string to lowercase
-  const requestedValue = _.lowerCase(req.params.test);
-  posts.forEach(function(post){
-    const storedTitle = _.lowerCase(post.title);
-    if (requestedValue === storedTitle){
-      res.render("post", {postTitle : post.title, postContent: post.content});
-    }
-  })
-  
+app.post("/delete", async function(req, res){
+  const postId = req.body.PostId;
+  console.log(postId);
+  try {
+    const deletedPost = await Post.findByIdAndDelete(postId);
+    console.log(deletedPost.title);
+    res.redirect("/");
+  } catch(err){
+    console.log(err);
+  }
 })
 
 
