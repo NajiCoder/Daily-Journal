@@ -7,7 +7,7 @@
         <form action="/delete" method="post">
             <h1> <%= post.title %> </h1>
             <!-- <p> <%= post.content %> </p> -->
-            <p> <%= post.content.substring(0, 100)+"..." %> 
+            <p> <%= post.content.substring(0, 600)+"  ..." %> 
                 <a href="/posts/<%= post._id %>">Read more</a><input type="hidden" name="PostId" value="<%= post._id %>">
                 <button type="submit" class="btn btn-danger">Delete</button>
             </p>
