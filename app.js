@@ -35,20 +35,9 @@ const postSchema = new mongoose.Schema({
 const Post = mongoose.model("post", postSchema);
 
 
-// async function insertPost(){
-//   try {
-//     const result = await Post.insertMany(posts);
-//     console.log("Inserted post1 into the database");
-//     result.save();
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
-
-// insertPost();
-
 const date = getDate();
 
+// find the date
 function getDate(){
   // weekday in options is not working, so I added the weekday manually
   let days = ['Sun', 'Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat'];
@@ -106,27 +95,18 @@ app.post("/compose", function(req, res){
     date: date
   })
   post.save();
-  console.log(post.date);
   res.redirect("/");
 })
 
 app.post("/delete", async function(req, res){
   const postId = req.body.PostId;
-  console.log(postId);
   try {
     const deletedPost = await Post.findByIdAndDelete(postId);
     console.log(deletedPost.title);
-    res.redirect("/");
   } catch(err){
     console.log(err);
   }
 })
-
-
-
-
-
-
 
 
 app.listen(port, function() {
